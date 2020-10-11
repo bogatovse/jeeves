@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Run Tests
-      run: dotnet test --logger:nunit
+      run: dotnet test --logger:nunit --no-restore --verbosity normal
     - uses: MirrorNG/nunit-reporter@v1.0.5
       if: always()
       with: 
