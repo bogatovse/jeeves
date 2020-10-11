@@ -36,7 +36,7 @@ namespace Jeeves.Server.Controllers
         
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult> Create([FromBody] CreateUser request)
+        public ActionResult Create([FromBody] CreateUser request)
         {
             return NoContent();
         }
