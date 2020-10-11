@@ -19,7 +19,9 @@ jobs:
         dotnet-version: 3.1.301
     - name: Install dependencies
       run: dotnet restore
-    - name: Build
+    - name: Build Debug
+      run: dotnet build --configuration Debug --no-restore
+    - name: Build Release
       run: dotnet build --configuration Release --no-restore
     - name: Run Tests
-      run: dotnet test --logger GitHubActions --no-restore --verbosity normal
+      run: dotnet test --logger GitHubActions --no-build --no-restore
