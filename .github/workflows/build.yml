@@ -1,4 +1,4 @@
-name: Jeeves Build
+name: Jeeves Build Workflow
 
 on:
   push:
