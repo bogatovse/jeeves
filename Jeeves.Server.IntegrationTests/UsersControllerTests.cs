@@ -71,7 +71,7 @@ namespace Jeeves.Server.IntegrationTests
             var user = JsonSerializer.Deserialize<JeevesUser>(await response.Content.ReadAsStringAsync());
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+            response.StatusCode.Should().Be(StatusCodes.Status200OK);
             user.Should().BeEquivalentTo(expectedUser);
         }
         
