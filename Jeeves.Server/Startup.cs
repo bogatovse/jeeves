@@ -8,6 +8,7 @@ using Jeeves.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -20,6 +21,7 @@ namespace Jeeves.Server
             services.AddControllers();
             services.AddAutoMapper(GetType().Assembly);
             services.AddSingleton<IUsersService, UsersService>();
+            //services.AddDbContext<UsersContext>(options => options.UseInMemoryDatabase("JeevesDatabase"));
             services.AddSingleton<IUsersRepository, UsersRepository>();
         }
         

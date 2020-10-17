@@ -15,6 +15,11 @@ namespace Jeeves.Server.IntegrationTests.Extensions
         {
             SwapService(services, ServiceLifetime.Singleton, implementationFactory);
         }
+        
+        public static void SwapScoped<TService>(this IServiceCollection services, Func<IServiceProvider, TService> implementationFactory)
+        {
+            SwapService(services, ServiceLifetime.Scoped, implementationFactory);
+        }
 
         private static void SwapService<TService>(this IServiceCollection services, ServiceLifetime lifetime, Func<IServiceProvider, TService> implementationFactory)
         {
