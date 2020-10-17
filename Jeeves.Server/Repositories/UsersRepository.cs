@@ -13,6 +13,7 @@ namespace Jeeves.Server.Repositories
         Task<IEnumerable<User>> GetUsersAsync();
         Task<User> FindUserAsync(Guid userId);
         Task DeleteUserAsync(Guid userId);
+        Task<User> CreateUserAsync(User user);
     }
 
     public class UsersContext : DbContext
@@ -44,6 +45,12 @@ namespace Jeeves.Server.Repositories
         public async Task DeleteUserAsync(Guid userId)
         {
             await _usersContext.Users.FindAsync(userId);
+        }
+
+        public async Task<User> CreateUserAsync(User user)
+        {
+            var createdUser = await _usersContext.Users.AddAsync(user);
+            return createdUser.Entity;
         }
     }
 }

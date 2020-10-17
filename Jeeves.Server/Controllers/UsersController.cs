@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Jeeves.Server.Domain;
 using Jeeves.Server.Representations;
+using Jeeves.Server.Representations.Requests;
 using Jeeves.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,12 +35,18 @@ namespace Jeeves.Server.Controllers
             return users;
         }
         
-        // [HttpPost]
-        // [Route("")]
-        // public ActionResult Create([FromBody] CreateUser request)
-        // {
-        //     return NoContent();
-        // }
+        [HttpPost]
+        [Route("")]
+        public async Task<ActionResult>Create([FromBody] CreateUser request)
+        {
+            var user = await _usersService.CreateUserAsync(new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName
+            });
+
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        }
         
         [HttpGet]
         [Route("{id}")]

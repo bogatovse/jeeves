@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Bogus;
 using FakeItEasy;
 using FluentAssertions;
 using Jeeves.Server.Domain;
@@ -10,7 +13,9 @@ using Jeeves.Server.IntegrationTests.Factories;
 using Jeeves.Server.IntegrationTests.Fakes;
 using Jeeves.Server.Repositories;
 using Jeeves.Server.Representations;
+using Jeeves.Server.Representations.Requests;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using NUnit.Framework;
 
 namespace Jeeves.Server.IntegrationTests.Tests.REST
@@ -34,12 +39,12 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             var users = JsonSerializer.Deserialize<JeevesUser[]>(await response.Content.ReadAsStringAsync());
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status200OK);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
             users.Should().BeEquivalentTo(expectedUsers);
         }
 
         [Test]
-        public async Task GetAllShouldReturnNoContentIfUsersDontExist()
+        public async Task GetAllShouldReturnNoContentStatusCodeIfUsersDontExist()
         {
             //Arrange
             var usersRepository = A.Fake<IUsersRepository>();
@@ -51,7 +56,7 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             using var response = await client.GetSuccessAsync("/api/v1/users");
         
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
         
         [TestCase(1)]
@@ -72,12 +77,12 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             var user = JsonSerializer.Deserialize<JeevesUser>(await response.Content.ReadAsStringAsync());
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status200OK);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
             user.Should().BeEquivalentTo(expectedUser);
         }
         
         [Test]
-        public async Task GetByIdShouldReturnNotFoundIfUserDoesntExist()
+        public async Task GetByIdShouldReturnNotFoundStatusCodeIfUserDoesntExist()
         {
             //Arrange
             var userId = Guid.NewGuid();
@@ -90,11 +95,11 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             using var response = await client.GetAsync($"/api/v1/users/{userId}");
             
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
         
         [Test]
-        public async Task DeleteByIdShouldReturnNoContent()
+        public async Task DeleteByIdShouldReturnNoContentStatusCode()
         {
             //Arrange
             var users = Fakers.User.Generate(10);
@@ -108,7 +113,7 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             using var response = await client.DeleteAsync($"/api/v1/users/{deletedUser.Id}");
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
         
         [TestCase(1)]
@@ -129,13 +134,13 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             using var response = await client.DeleteAsync($"/api/v1/users/{deletedUser.Id}");
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
             using var getResponse = await client.GetAsync($"/api/v1/users/{deletedUser.Id}");
-            getResponse.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+            getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
         
         [Test]
-        public async Task DeleteByIdShouldReturnNotFoundIfUserDoesntExist()
+        public async Task DeleteByIdShouldReturnNotFoundStatusCodeIfUserDoesntExist()
         {
             //Arrange
             var deletedUser = Fakers.User.Generate();
@@ -148,7 +153,48 @@ namespace Jeeves.Server.IntegrationTests.Tests.REST
             using var response = await client.DeleteAsync($"/api/v1/users/{deletedUser.Id}");
 
             //Assert
-            response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+        
+        [Test]
+        public async Task PostShouldReturnCreatedStatusCode()
+        {
+            //Arrange
+            var user = Fakers.User.Generate();
+            var usersRepository = A.Fake<IUsersRepository>();
+            A.CallTo(() => usersRepository.CreateUserAsync(A<User>.Ignored)).Returns(Task.FromResult(user));
+            using var factory = new JeevesWebApplicationFactory(services => services.SwapSingleton(provider => usersRepository));
+            using var client = factory.CreateClient();
+            var createUserRequest = new CreateUser { FirstName = user.FirstName, LastName = user.LastName };
+
+            //Act
+            using var response = await client.PostAsync("/api/v1/users/", JsonSerializer.Serialize(createUserRequest));
+
+            //Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Created);
+            response.Headers.Location.PathAndQuery.Should().Be($"/api/v1/users/{user.Id}");
+        }
+        
+        [Test]
+        public async Task PostShouldCreateUser()
+        {
+            //Arrange
+            var expectedUser = Fakers.User.Generate();
+            var usersRepository = A.Fake<IUsersRepository>();
+            A.CallTo(() => usersRepository.CreateUserAsync(A<User>.Ignored)).Returns(Task.FromResult(expectedUser));
+            A.CallTo(() => usersRepository.FindUserAsync(expectedUser.Id)).Returns(Task.FromResult(expectedUser));
+            using var factory = new JeevesWebApplicationFactory(services => services.SwapSingleton(provider => usersRepository));
+            using var client = factory.CreateClient();
+            var createUserRequest = new CreateUser { FirstName = expectedUser.FirstName, LastName = expectedUser.LastName };
+
+            //Act
+            using var response = await client.PostAsync("/api/v1/users/", JsonSerializer.Serialize(createUserRequest));
+
+            //Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Created);
+            using var getResponse = await client.GetSuccessAsync($"/api/v1/users/{expectedUser.Id}");
+            var actualUser = JsonSerializer.Deserialize<JeevesUser>(await getResponse.Content.ReadAsStringAsync());
+            actualUser.Should().BeEquivalentTo(expectedUser);
         }
     }
 }
