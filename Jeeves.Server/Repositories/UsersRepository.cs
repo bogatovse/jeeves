@@ -15,42 +15,27 @@ namespace Jeeves.Server.Repositories
         Task DeleteUserAsync(Guid userId);
         Task<User> CreateUserAsync(User user);
     }
-
-    public class UsersContext : DbContext
-    {
-        public UsersContext(DbContextOptions<UsersRepository> options) : base(options) { }
-        
-        public DbSet<User> Users { get; set; }
-    }
     
     public class UsersRepository : DbContext, IUsersRepository
     {
-        private readonly UsersContext _usersContext;
-        
-        public UsersRepository(UsersContext usersContext)
+        public Task<IEnumerable<User>> GetUsersAsync()
         {
-            _usersContext = usersContext;
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<User>> GetUsersAsync()
+        public Task<User> FindUserAsync(Guid userId)
         {
-            return await _usersContext.Users.ToListAsync(CancellationToken.None);
+            throw new NotImplementedException();
         }
 
-        public async Task<User> FindUserAsync(Guid userId)
+        public Task DeleteUserAsync(Guid userId)
         {
-            return await _usersContext.Users.FindAsync(userId);
+            throw new NotImplementedException();
         }
 
-        public async Task DeleteUserAsync(Guid userId)
+        public Task<User> CreateUserAsync(User user)
         {
-            await _usersContext.Users.FindAsync(userId);
-        }
-
-        public async Task<User> CreateUserAsync(User user)
-        {
-            var createdUser = await _usersContext.Users.AddAsync(user);
-            return createdUser.Entity;
+            throw new NotImplementedException();
         }
     }
 }
