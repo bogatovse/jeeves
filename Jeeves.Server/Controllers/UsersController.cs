@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Jeeves.Server.Representations;
-using Jeeves.Server.Representations.Requests;
 using Jeeves.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,12 +33,12 @@ namespace Jeeves.Server.Controllers
             return users;
         }
         
-        [HttpPost]
-        [Route("")]
-        public ActionResult Create([FromBody] CreateUser request)
-        {
-            return NoContent();
-        }
+        // [HttpPost]
+        // [Route("")]
+        // public ActionResult Create([FromBody] CreateUser request)
+        // {
+        //     return NoContent();
+        // }
         
         [HttpGet]
         [Route("{id}")]
@@ -57,6 +56,11 @@ namespace Jeeves.Server.Controllers
         [Route("{id}")]
         public async Task<ActionResult> DeleteById([FromRoute] Guid id)
         {
+            var user = await _usersService.FindUserAsync(id);
+
+            if (user == null)
+                return NotFound();
+            
             await _usersService.DeleteUserAsync(id);
             return NoContent();
         }

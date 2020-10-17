@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FakeItEasy;
@@ -12,14 +13,14 @@ using Jeeves.Server.Representations;
 using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
 
-namespace Jeeves.Server.IntegrationTests
+namespace Jeeves.Server.IntegrationTests.Tests.REST
 {
-    [TestFixture]
+    [TestFixture(Category = "/api/v1/users")]
     public class UsersControllerTests
     {
         [TestCase(5)]
         [TestCase(30)]
-        public async Task ShouldReturnExactlyTheSameUsers(int usersCount)
+        public async Task GetAllShouldReturnExactlyTheSameUsers(int usersCount)
         {
             //Arrange
             var expectedUsers = Fakers.User.Generate(usersCount);
@@ -36,9 +37,9 @@ namespace Jeeves.Server.IntegrationTests
             response.StatusCode.Should().Be(StatusCodes.Status200OK);
             users.Should().BeEquivalentTo(expectedUsers);
         }
-        
+
         [Test]
-        public async Task ShouldReturnNoContentIfUsersDontExist()
+        public async Task GetAllShouldReturnNoContentIfUsersDontExist()
         {
             //Arrange
             var usersRepository = A.Fake<IUsersRepository>();
@@ -56,7 +57,7 @@ namespace Jeeves.Server.IntegrationTests
         [TestCase(1)]
         [TestCase(4)]
         [TestCase(9)]
-        public async Task ShouldReturnUserById(int userNumber)
+        public async Task GetByIdShouldReturnSpecifiedUser(int userNumber)
         {
             //Arrange
             var users = Fakers.User.Generate(10);
@@ -76,7 +77,7 @@ namespace Jeeves.Server.IntegrationTests
         }
         
         [Test]
-        public async Task ShouldReturnNotFoundIfUserDoesntExist()
+        public async Task GetByIdShouldReturnNotFoundIfUserDoesntExist()
         {
             //Arrange
             var userId = Guid.NewGuid();
@@ -92,14 +93,12 @@ namespace Jeeves.Server.IntegrationTests
             response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
         }
         
-        [TestCase(1)]
-        [TestCase(4)]
-        [TestCase(9)]
-        public async Task ShouldDeleteUserById(int userNumber)
+        [Test]
+        public async Task DeleteByIdShouldReturnNoContent()
         {
             //Arrange
             var users = Fakers.User.Generate(10);
-            var deletedUser = users[userNumber];
+            var deletedUser = users[3];
             var usersRepository = A.Fake<IUsersRepository>();
             A.CallTo(() => usersRepository.DeleteUserAsync(deletedUser.Id)).Returns(Task.CompletedTask);
             using var factory = new JeevesWebApplicationFactory(services => services.SwapSingleton(provider => usersRepository));
@@ -110,7 +109,46 @@ namespace Jeeves.Server.IntegrationTests
 
             //Assert
             response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
-            A.CallTo(() => usersRepository.DeleteUserAsync(deletedUser.Id)).MustHaveHappenedOnceExactly();
+        }
+        
+        [TestCase(1)]
+        [TestCase(4)]
+        [TestCase(9)]
+        public async Task DeleteByIdShouldDeleteSpecifiedUser(int userNumber)
+        {
+            //Arrange
+            var users = Fakers.User.Generate(10);
+            var deletedUser = users[userNumber];
+            var usersRepository = A.Fake<IUsersRepository>();
+            A.CallTo(() => usersRepository.DeleteUserAsync(deletedUser.Id)).ReturnsLazily(() => Task.FromResult(users.Remove(deletedUser)));
+            A.CallTo(() => usersRepository.FindUserAsync(deletedUser.Id)).ReturnsLazily(() => Task.FromResult(users.Find(u => u.Id == deletedUser.Id)));
+            using var factory = new JeevesWebApplicationFactory(services => services.SwapSingleton(provider => usersRepository));
+            using var client = factory.CreateClient();
+            
+            //Act
+            using var response = await client.DeleteAsync($"/api/v1/users/{deletedUser.Id}");
+
+            //Assert
+            response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+            using var getResponse = await client.GetAsync($"/api/v1/users/{deletedUser.Id}");
+            getResponse.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        }
+        
+        [Test]
+        public async Task DeleteByIdShouldReturnNotFoundIfUserDoesntExist()
+        {
+            //Arrange
+            var deletedUser = Fakers.User.Generate();
+            var usersRepository = A.Fake<IUsersRepository>();
+            A.CallTo(() => usersRepository.FindUserAsync(deletedUser.Id)).Returns(Task.FromResult<User>(null));
+            using var factory = new JeevesWebApplicationFactory(services => services.SwapSingleton(provider => usersRepository));
+            using var client = factory.CreateClient();
+            
+            //Act
+            using var response = await client.DeleteAsync($"/api/v1/users/{deletedUser.Id}");
+
+            //Assert
+            response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
         }
     }
 }

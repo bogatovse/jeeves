@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Jeeves.Server.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jeeves.Server.Repositories
 {
@@ -12,26 +14,36 @@ namespace Jeeves.Server.Repositories
         Task<User> FindUserAsync(Guid userId);
         Task DeleteUserAsync(Guid userId);
     }
-    
-    public class UsersRepository : IUsersRepository
+
+    public class UsersContext : DbContext
     {
-        public Task<IEnumerable<User>> GetUsersAsync()
+        public UsersContext(DbContextOptions<UsersRepository> options) : base(options) { }
+        
+        public DbSet<User> Users { get; set; }
+    }
+    
+    public class UsersRepository : DbContext, IUsersRepository
+    {
+        private readonly UsersContext _usersContext;
+        
+        public UsersRepository(UsersContext usersContext)
         {
-            return Task.FromResult(new []
-            {
-                new User() {Id = Guid.NewGuid(), FirstName = "Sergey", LastName = "Bogatov"},
-                new User() {Id = Guid.NewGuid(), FirstName = "Valera", LastName = "Borch"}
-            }.AsEnumerable());
+            _usersContext = usersContext;
         }
 
-        public Task<User> FindUserAsync(Guid userId)
+        public async Task<IEnumerable<User>> GetUsersAsync()
         {
-            return null;
+            return await _usersContext.Users.ToListAsync(CancellationToken.None);
         }
 
-        public Task DeleteUserAsync(Guid userId)
+        public async Task<User> FindUserAsync(Guid userId)
         {
-            return Task.CompletedTask;
+            return await _usersContext.Users.FindAsync(userId);
+        }
+
+        public async Task DeleteUserAsync(Guid userId)
+        {
+            await _usersContext.Users.FindAsync(userId);
         }
     }
 }
