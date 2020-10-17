@@ -11,6 +11,7 @@ namespace Jeeves.Server.Services
         Task<IEnumerable<User>> GetUsersAsync();
         Task<User> FindUserAsync(Guid userId);
         Task DeleteUserAsync(Guid userId);
+        Task<User> CreateUserAsync(User user);
     }
     
     public class UsersService : IUsersService
@@ -35,6 +36,11 @@ namespace Jeeves.Server.Services
         public Task DeleteUserAsync(Guid userId)
         {
             return _usersRepository.DeleteUserAsync(userId);
+        }
+
+        public Task<User> CreateUserAsync(User user)
+        {
+            return _usersRepository.CreateUserAsync(user);
         }
     }
 }
