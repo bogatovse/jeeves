@@ -21,8 +21,9 @@ namespace Jeeves.Server
             services.AddControllers();
             services.AddAutoMapper(GetType().Assembly);
             services.AddSingleton<IUsersService, UsersService>();
-            //services.AddDbContext<UsersContext>(options => options.UseInMemoryDatabase("JeevesDatabase"));
             services.AddSingleton<IUsersRepository, UsersRepository>();
+            services.AddSingleton<IChallengesService, ChallengesService>();
+            services.AddSingleton<IChallengesRepository, ChallengesRepository>();
         }
         
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
