@@ -87,6 +87,7 @@ namespace Jeeves.Server.UnitTests
         public async Task ExecuteShouldCallOnCancelledWhenHostIsTerminating()
         {
             //Arrange
+            using var startedEvent = new ManualResetEvent(false);
             var attempt = new ChallengeAttempt();
             var workerCreator = A.Fake<IWorkerCreator>();
             var worker = A.Fake<IWorker>();
@@ -99,6 +100,7 @@ namespace Jeeves.Server.UnitTests
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(1000, cancellationToken);
+                    startedEvent.Set();
                 }
                 cancellationToken.ThrowIfCancellationRequested();
             });
@@ -107,6 +109,7 @@ namespace Jeeves.Server.UnitTests
             //Act
             await foreman.StartAsync(CancellationToken.None);
             await foreman.EnqueueWorkAsync(attempt, listener, CancellationToken.None);
+            startedEvent.WaitOne(TimeSpan.FromSeconds(5));
             await foreman.StopAsync(CancellationToken.None);
                 
             //Assert
