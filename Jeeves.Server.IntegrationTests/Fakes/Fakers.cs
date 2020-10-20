@@ -9,6 +9,8 @@ namespace Jeeves.Server.IntegrationTests.Fakes
         public static Faker<User> User { get; }
         public static Faker<Challenge> Challenge { get; }
         
+        public static Faker<ChallengeAttempt> Attempt { get; }
+        
         static Fakers()
         {
             User = new Faker<User>()
@@ -21,6 +23,13 @@ namespace Jeeves.Server.IntegrationTests.Fakes
                 .StrictMode(true)
                 .RuleFor(c => c.Id, f => Guid.NewGuid())
                 .RuleFor(c => c.Name, f => f.Lorem.Word());
+            
+            Attempt = new Faker<ChallengeAttempt>()
+                .StrictMode(true)
+                .RuleFor(c => c.Id, f => Guid.NewGuid())
+                .RuleFor(c => c.Status, f => f.Random.Enum<ChallengeAttemptStatus>())
+                .RuleFor(c => c.Solution, f => f.Random.Bytes(1024));
+            
         }
     }
 }
