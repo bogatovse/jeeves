@@ -1,4 +1,5 @@
 using AutoMapper;
+using Jeeves.Server.Extensions;
 using Jeeves.Server.Repositories;
 using Jeeves.Server.Services;
 using Jeeves.Server.Workers;
@@ -15,6 +16,7 @@ namespace Jeeves.Server
         {
             services.AddControllers();
             services.AddAutoMapper(GetType().Assembly);
+            services.AddWorkflowStepResolver();
             services.AddSingleton<IUsersService, UsersService>();
             services.AddSingleton<IUsersRepository, UsersRepository>();
             services.AddSingleton<IChallengesService, ChallengesService>();
