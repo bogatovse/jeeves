@@ -14,7 +14,7 @@ namespace Jeeves.Server.Challenges.Converters
             return type == typeof(WorkflowRunStepMetrics);
         }
 
-        public object? ReadYaml(IParser parser, Type type)
+        public object ReadYaml(IParser parser, Type type)
         {
             if (parser.Current is SequenceStart)
             {
@@ -34,7 +34,7 @@ namespace Jeeves.Server.Challenges.Converters
             }
         }
 
-        public void WriteYaml(IEmitter emitter, object? value, Type type)
+        public void WriteYaml(IEmitter emitter, object value, Type type)
         {
             throw new NotImplementedException();
         }
